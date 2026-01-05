@@ -6,12 +6,12 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { NodeType } from '@shared/organization-core/entities';
-import { GroupsRepository } from '../repositories/groups.repository';
+import { GroupsRepositoryInterface } from '../interfaces/repositories/group.repository.interface';
 import { GroupsService } from './groups.service';
 
 describe('GroupsService', () => {
   let service: GroupsService;
-  let repository: GroupsRepository;
+  let repository: GroupsRepositoryInterface;
   let logger: WinstonLoggerService;
 
   const mockGroupsRepository = {
@@ -33,7 +33,7 @@ describe('GroupsService', () => {
       providers: [
         GroupsService,
         {
-          provide: GroupsRepository,
+          provide: GroupsRepositoryInterface,
           useValue: mockGroupsRepository,
         },
         {
@@ -44,7 +44,9 @@ describe('GroupsService', () => {
     }).compile();
 
     service = module.get<GroupsService>(GroupsService);
-    repository = module.get<GroupsRepository>(GroupsRepository);
+    repository = module.get<GroupsRepositoryInterface>(
+      GroupsRepositoryInterface,
+    );
     logger = module.get<WinstonLoggerService>(WinstonLoggerService);
   });
 

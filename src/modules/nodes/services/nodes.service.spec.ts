@@ -1,12 +1,12 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
-import { NodesRepository } from '../repositories/nodes.repository';
+import { NodesRepositoryInterface } from '../interfaces/repositories/node.repository.interface';
 import { NodesService } from './nodes.service';
 
 describe('NodesService', () => {
   let service: NodesService;
-  let repository: NodesRepository;
+  let repository: NodesRepositoryInterface;
   let logger: WinstonLoggerService;
 
   const mockNodesRepository = {
@@ -25,7 +25,7 @@ describe('NodesService', () => {
       providers: [
         NodesService,
         {
-          provide: NodesRepository,
+          provide: NodesRepositoryInterface,
           useValue: mockNodesRepository,
         },
         {
@@ -36,7 +36,7 @@ describe('NodesService', () => {
     }).compile();
 
     service = module.get<NodesService>(NodesService);
-    repository = module.get<NodesRepository>(NodesRepository);
+    repository = module.get<NodesRepositoryInterface>(NodesRepositoryInterface);
     logger = module.get<WinstonLoggerService>(WinstonLoggerService);
   });
 
