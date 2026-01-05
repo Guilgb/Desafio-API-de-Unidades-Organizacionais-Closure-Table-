@@ -5,8 +5,8 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
-import { CreateUserDto } from '@shared/organization-core/dtos';
 import { NodeType } from '@shared/organization-core/entities';
+import { CreateUserDto } from '../dtos';
 import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()

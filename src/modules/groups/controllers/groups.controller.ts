@@ -1,6 +1,6 @@
 import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreateGroupDto } from '@shared/organization-core/dtos';
+import { CreateGroupDto } from '../dtos';
 import { GroupsService } from '../services/groups.service';
 
 @ApiTags('Groups')

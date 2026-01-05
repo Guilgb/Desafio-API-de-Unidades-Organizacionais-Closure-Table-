@@ -9,10 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-  AssociateUserGroupDto,
-  CreateUserDto,
-} from '@shared/organization-core/dtos';
+import { AssociateUserGroupDto, CreateUserDto } from '../dtos';
 import { UsersService } from '../services/users.service';
 
 @ApiTags('Users')
