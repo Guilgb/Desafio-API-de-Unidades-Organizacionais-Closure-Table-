@@ -1,2 +1,2 @@
-export { ClosureEntity } from '../../../../modules/organization/entities/closure.entity';
-export { NodeEntity } from '../../../../modules/organization/entities/node.entity';
+export { ClosureEntity } from '../../../organization-core/entities/closure.entity';
+export { NodeEntity } from '../../../organization-core/entities/node.entity';

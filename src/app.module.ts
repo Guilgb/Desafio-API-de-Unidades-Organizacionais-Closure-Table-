@@ -5,7 +5,9 @@ import { DatabaseModule } from '@shared/modules/database/database.module';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { LoggingInterceptor } from '@shared/modules/winston/winston.interceptor';
 import { WinstonModule } from '@shared/modules/winston/winston.module';
-import { OrganizationModule } from './modules/organization/organization.module';
+import { GroupsModule } from './modules/groups/groups.module';
+import { NodesModule } from './modules/nodes/nodes.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import { OrganizationModule } from './modules/organization/organization.module';
     }),
     WinstonModule,
     DatabaseModule,
-    OrganizationModule,
+    UsersModule,
+    GroupsModule,
+    NodesModule,
   ],
   providers: [
     WinstonLoggerService,

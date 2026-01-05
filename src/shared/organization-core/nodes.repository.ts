@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { ClosureEntity, NodeEntity, NodeType } from '../entities';
+import { ClosureEntity, NodeEntity, NodeType } from './entities';
 
 export interface NodeWithDepth {
   id: string;

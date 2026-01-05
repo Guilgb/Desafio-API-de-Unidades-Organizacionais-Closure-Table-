@@ -5,12 +5,12 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
-import { CreateGroupDto, CreateUserDto } from '../dtos';
-import { NodeType } from '../entities';
-import { NodesRepository } from '../repositories/nodes.repository';
+import { CreateUserDto } from '@shared/organization-core/dtos';
+import { NodeType } from '@shared/organization-core/entities';
+import { NodesRepository } from '@shared/organization-core/nodes.repository';
 
 @Injectable()
-export class NodesService {
+export class UsersService {
   constructor(
     private readonly nodesRepository: NodesRepository,
     private readonly logger: WinstonLoggerService,
@@ -50,84 +50,6 @@ export class NodesService {
       };
     } catch (error) {
       this.logger.error('Error creating user', error.stack, undefined, {
-        error: error.message,
-      });
-      throw error;
-    }
-  }
-
-  async createGroup(createGroupDto: CreateGroupDto) {
-    this.logger.log('Creating group', undefined, {
-      name: createGroupDto.name,
-      parentId: createGroupDto.parentId,
-    });
-
-    try {
-      // Check if parent exists and is a GROUP
-      if (createGroupDto.parentId) {
-        const parent = await this.nodesRepository.findNodeById(
-          createGroupDto.parentId,
-        );
-        if (!parent) {
-          this.logger.warn('Parent node not found', undefined, {
-            parentId: createGroupDto.parentId,
-          });
-          throw new NotFoundException({ message: 'Parent node not found' });
-        }
-        if (parent.type !== NodeType.GROUP) {
-          this.logger.warn('Parent node is not a GROUP', undefined, {
-            parentId: createGroupDto.parentId,
-          });
-          throw new UnprocessableEntityException({
-            message: 'Parent must be a GROUP',
-          });
-        }
-      }
-
-      const group = await this.nodesRepository.createNode(
-        NodeType.GROUP,
-        createGroupDto.name,
-      );
-
-      // Link to parent if provided
-      if (createGroupDto.parentId) {
-        // Check for cycles
-        const wouldCreateCycle = await this.nodesRepository.checkCycle(
-          createGroupDto.parentId,
-          group.id,
-        );
-        if (wouldCreateCycle) {
-          this.logger.warn(
-            'Creating this link would create a cycle',
-            undefined,
-            {
-              childId: group.id,
-              parentId: createGroupDto.parentId,
-            },
-          );
-          throw new ConflictException({
-            message: 'Cannot create cycle in hierarchy',
-          });
-        }
-
-        await this.nodesRepository.linkNodes(group.id, createGroupDto.parentId);
-        this.logger.log('Group linked to parent', undefined, {
-          groupId: group.id,
-          parentId: createGroupDto.parentId,
-        });
-      }
-
-      this.logger.log('Group created successfully', undefined, {
-        id: group.id,
-      });
-
-      return {
-        id: group.id,
-        type: group.type,
-        name: group.name,
-      };
-    } catch (error) {
-      this.logger.error('Error creating group', error.stack, undefined, {
         error: error.message,
       });
       throw error;
@@ -193,7 +115,9 @@ export class NodesService {
         'Error associating user to group',
         error.stack,
         undefined,
-        { error: error.message },
+        {
+          error: error.message,
+        },
       );
       throw error;
     }
@@ -219,52 +143,6 @@ export class NodesService {
       id: org.id,
       name: org.name,
       depth: org.depth,
-    }));
-  }
-
-  async getNodeAncestors(nodeId: string) {
-    this.logger.log('Getting node ancestors', undefined, { nodeId });
-
-    const node = await this.nodesRepository.findNodeById(nodeId);
-    if (!node) {
-      this.logger.warn('Node not found', undefined, { nodeId });
-      throw new NotFoundException({ message: 'Node not found' });
-    }
-
-    const ancestors = await this.nodesRepository.getAncestors(nodeId);
-
-    this.logger.log('Retrieved node ancestors', undefined, {
-      nodeId,
-      count: ancestors.length,
-    });
-
-    return ancestors.map(ancestor => ({
-      id: ancestor.id,
-      name: ancestor.name,
-      depth: ancestor.depth,
-    }));
-  }
-
-  async getNodeDescendants(nodeId: string) {
-    this.logger.log('Getting node descendants', undefined, { nodeId });
-
-    const node = await this.nodesRepository.findNodeById(nodeId);
-    if (!node) {
-      this.logger.warn('Node not found', undefined, { nodeId });
-      throw new NotFoundException({ message: 'Node not found' });
-    }
-
-    const descendants = await this.nodesRepository.getDescendants(nodeId);
-
-    this.logger.log('Retrieved node descendants', undefined, {
-      nodeId,
-      count: descendants.length,
-    });
-
-    return descendants.map(descendant => ({
-      id: descendant.id,
-      name: descendant.name,
-      depth: descendant.depth,
     }));
   }
 }
