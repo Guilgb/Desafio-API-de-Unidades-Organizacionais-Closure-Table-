@@ -1,4 +1,5 @@
 import { join } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
@@ -21,6 +22,57 @@ const colors = {
 };
 
 winston.addColors(colors);
+
+const ecsFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
+  winston.format.errors({ stack: true }),
+  winston.format.printf(
+    ({
+      timestamp,
+      level,
+      message,
+      stack,
+      context,
+      traceId,
+      spanId,
+      ...meta
+    }) => {
+      const ecsLog: any = {
+        '@timestamp': timestamp,
+        'ecs.version': '8.0.0',
+        'log.level': level,
+        message,
+        'service.name': 'challenge-api',
+      };
+
+      if (traceId || meta.traceId) {
+        ecsLog['trace.id'] = traceId || meta.traceId;
+      } else {
+        ecsLog['trace.id'] = uuidv4();
+      }
+
+      if (spanId || meta.spanId) {
+        ecsLog['span.id'] = spanId || meta.spanId;
+      } else {
+        ecsLog['span.id'] = uuidv4();
+      }
+
+      if (context) {
+        ecsLog['service.component'] = context;
+      }
+
+      if (stack) {
+        ecsLog['error.stack_trace'] = stack;
+      }
+
+      if (Object.keys(meta).length > 0) {
+        ecsLog.metadata = meta;
+      }
+
+      return JSON.stringify(ecsLog);
+    },
+  ),
+);
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -58,14 +110,14 @@ const createDailyRotateTransport = (filename: string, level?: string) => {
     maxSize: '20m',
     maxFiles: '30d',
     level,
-    format: logFormat,
+    format: process.env.NODE_ENV === 'production' ? ecsFormat : logFormat,
   });
 };
 
 export const logger = winston.createLogger({
   levels,
   level: process.env.LOG_LEVEL || 'info',
-  format: logFormat,
+  format: process.env.NODE_ENV === 'production' ? ecsFormat : logFormat,
   transports: [
     createDailyRotateTransport('application-%DATE%.log'),
 
@@ -82,7 +134,11 @@ export const logger = winston.createLogger({
             ),
           }),
         ]
-      : []),
+      : [
+          new winston.transports.Console({
+            format: ecsFormat,
+          }),
+        ]),
   ],
 });
 
@@ -114,9 +170,34 @@ export const httpLogger = winston.createLogger({
   levels,
   level: 'http',
   format: winston.format.combine(
-    winston.format.timestamp(),
+    winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
     winston.format.printf(
-      ({ timestamp, method, url, statusCode, responseTime, ip }) => {
+      ({
+        timestamp,
+        method,
+        url,
+        statusCode,
+        responseTime,
+        ip,
+        traceId,
+        spanId,
+      }) => {
+        if (process.env.NODE_ENV === 'production') {
+          const duration = Number(responseTime) || 0;
+          return JSON.stringify({
+            '@timestamp': timestamp,
+            'ecs.version': '8.0.0',
+            'log.level': 'http',
+            'service.name': 'challenge-api',
+            'trace.id': traceId || uuidv4(),
+            'span.id': spanId || uuidv4(),
+            'http.request.method': method,
+            'url.path': url,
+            'http.response.status_code': statusCode,
+            'event.duration': duration * 1000000,
+            'client.ip': ip,
+          });
+        }
         return `${timestamp} [HTTP] ${method} ${url} ${statusCode} - ${responseTime}ms - ${ip}`;
       },
     ),
