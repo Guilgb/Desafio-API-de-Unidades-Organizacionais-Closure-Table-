@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from '@shared/modules/winston/winston.module';
 import { ClosureEntity, NodeEntity } from '@shared/organization-core/entities';
-import { NodesRepository } from '@shared/organization-core/nodes.repository';
 import { NodesController } from './controllers/nodes.controller';
+import { NodesRepository } from './repositories/nodes.repository';
 import { NodesService } from './services/nodes.service';
 
 @Module({

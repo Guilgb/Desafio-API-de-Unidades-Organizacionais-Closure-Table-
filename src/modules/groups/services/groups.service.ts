@@ -7,12 +7,12 @@ import {
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { CreateGroupDto } from '@shared/organization-core/dtos';
 import { NodeType } from '@shared/organization-core/entities';
-import { NodesRepository } from '@shared/organization-core/nodes.repository';
+import { GroupsRepository } from '../repositories/groups.repository';
 
 @Injectable()
 export class GroupsService {
   constructor(
-    private readonly nodesRepository: NodesRepository,
+    private readonly groupsRepository: GroupsRepository,
     private readonly logger: WinstonLoggerService,
   ) {}
 
@@ -25,7 +25,7 @@ export class GroupsService {
     try {
       // Check if parent exists and is a GROUP
       if (createGroupDto.parentId) {
-        const parent = await this.nodesRepository.findNodeById(
+        const parent = await this.groupsRepository.findNodeById(
           createGroupDto.parentId,
         );
         if (!parent) {
@@ -44,15 +44,14 @@ export class GroupsService {
         }
       }
 
-      const group = await this.nodesRepository.createNode(
-        NodeType.GROUP,
+      const group = await this.groupsRepository.createGroup(
         createGroupDto.name,
       );
 
       // Link to parent if provided
       if (createGroupDto.parentId) {
         // Check for cycles
-        const wouldCreateCycle = await this.nodesRepository.checkCycle(
+        const wouldCreateCycle = await this.groupsRepository.checkCycle(
           createGroupDto.parentId,
           group.id,
         );
@@ -70,7 +69,10 @@ export class GroupsService {
           });
         }
 
-        await this.nodesRepository.linkNodes(group.id, createGroupDto.parentId);
+        await this.groupsRepository.linkGroupToParent(
+          group.id,
+          createGroupDto.parentId,
+        );
         this.logger.log('Group linked to parent', undefined, {
           groupId: group.id,
           parentId: createGroupDto.parentId,
@@ -81,11 +83,7 @@ export class GroupsService {
         id: group.id,
       });
 
-      return {
-        id: group.id,
-        type: group.type,
-        name: group.name,
-      };
+      return group;
     } catch (error) {
       this.logger.error('Error creating group', error.stack, undefined, {
         error: error.message,

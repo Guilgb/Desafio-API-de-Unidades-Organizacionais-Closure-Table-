@@ -7,12 +7,12 @@ import {
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { CreateUserDto } from '@shared/organization-core/dtos';
 import { NodeType } from '@shared/organization-core/entities';
-import { NodesRepository } from '@shared/organization-core/nodes.repository';
+import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly nodesRepository: NodesRepository,
+    private readonly usersRepository: UsersRepository,
     private readonly logger: WinstonLoggerService,
   ) {}
 
@@ -23,7 +23,7 @@ export class UsersService {
     });
 
     // Check if email already exists
-    const existingUser = await this.nodesRepository.findNodeByEmail(
+    const existingUser = await this.usersRepository.findUserByEmail(
       createUserDto.email,
     );
     if (existingUser) {
@@ -34,20 +34,14 @@ export class UsersService {
     }
 
     try {
-      const user = await this.nodesRepository.createNode(
-        NodeType.USER,
+      const user = await this.usersRepository.createUser(
         createUserDto.name,
         createUserDto.email,
       );
 
       this.logger.log('User created successfully', undefined, { id: user.id });
 
-      return {
-        id: user.id,
-        type: user.type,
-        name: user.name,
-        email: user.email,
-      };
+      return user;
     } catch (error) {
       this.logger.error('Error creating user', error.stack, undefined, {
         error: error.message,
@@ -63,20 +57,14 @@ export class UsersService {
     });
 
     // Check if user exists and is a USER
-    const user = await this.nodesRepository.findNodeById(userId);
+    const user = await this.usersRepository.findUserById(userId);
     if (!user) {
       this.logger.warn('User node not found', undefined, { userId });
       throw new NotFoundException({ message: 'User not found' });
     }
-    if (user.type !== NodeType.USER) {
-      this.logger.warn('Node is not a USER', undefined, { userId });
-      throw new UnprocessableEntityException({
-        message: 'Node must be a USER',
-      });
-    }
 
     // Check if group exists and is a GROUP
-    const group = await this.nodesRepository.findNodeById(groupId);
+    const group = await this.usersRepository.findNodeById(groupId);
     if (!group) {
       this.logger.warn('Group node not found', undefined, { groupId });
       throw new NotFoundException({ message: 'Group not found' });
@@ -89,7 +77,7 @@ export class UsersService {
     }
 
     // Check for cycles
-    const wouldCreateCycle = await this.nodesRepository.checkCycle(
+    const wouldCreateCycle = await this.usersRepository.checkCycle(
       groupId,
       userId,
     );
@@ -105,7 +93,7 @@ export class UsersService {
     }
 
     try {
-      await this.nodesRepository.linkNodes(userId, groupId);
+      await this.usersRepository.linkUserToGroup(userId, groupId);
       this.logger.log('User associated to group successfully', undefined, {
         userId,
         groupId,
@@ -126,23 +114,20 @@ export class UsersService {
   async getUserOrganizations(userId: string) {
     this.logger.log('Getting user organizations', undefined, { userId });
 
-    const user = await this.nodesRepository.findNodeById(userId);
+    const user = await this.usersRepository.findUserById(userId);
     if (!user) {
       this.logger.warn('User not found', undefined, { userId });
       throw new NotFoundException({ message: 'User not found' });
     }
 
-    const organizations = await this.nodesRepository.getOrganizations(userId);
+    const organizations =
+      await this.usersRepository.getUserOrganizations(userId);
 
     this.logger.log('Retrieved user organizations', undefined, {
       userId,
       count: organizations.length,
     });
 
-    return organizations.map(org => ({
-      id: org.id,
-      name: org.name,
-      depth: org.depth,
-    }));
+    return organizations;
   }
 }

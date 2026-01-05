@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
-import { NodesRepository } from '@shared/organization-core/nodes.repository';
+import { NodesRepository } from '../repositories/nodes.repository';
 
 @Injectable()
 export class NodesService {
@@ -25,11 +25,7 @@ export class NodesService {
       count: ancestors.length,
     });
 
-    return ancestors.map(ancestor => ({
-      id: ancestor.id,
-      name: ancestor.name,
-      depth: ancestor.depth,
-    }));
+    return ancestors;
   }
 
   async getNodeDescendants(nodeId: string) {
@@ -48,10 +44,6 @@ export class NodesService {
       count: descendants.length,
     });
 
-    return descendants.map(descendant => ({
-      id: descendant.id,
-      name: descendant.name,
-      depth: descendant.depth,
-    }));
+    return descendants;
   }
 }
