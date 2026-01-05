@@ -24,7 +24,7 @@ services:
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - JWT_EXPIRATION=1d
     depends_on:
-      db:
+      challenge_db:
         condition: service_healthy
     networks:
       - challenge-network
