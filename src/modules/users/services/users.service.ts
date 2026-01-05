@@ -22,7 +22,6 @@ export class UsersService {
       email: createUserDto.email,
     });
 
-    // Check if email already exists
     const existingUser = await this.usersRepository.findUserByEmail(
       createUserDto.email,
     );
@@ -56,14 +55,12 @@ export class UsersService {
       groupId,
     });
 
-    // Check if user exists and is a USER
     const user = await this.usersRepository.findUserById(userId);
     if (!user) {
       this.logger.warn('User node not found', undefined, { userId });
       throw new NotFoundException({ message: 'User not found' });
     }
 
-    // Check if group exists and is a GROUP
     const group = await this.usersRepository.findNodeById(groupId);
     if (!group) {
       this.logger.warn('Group node not found', undefined, { groupId });
@@ -76,7 +73,6 @@ export class UsersService {
       });
     }
 
-    // Check for cycles
     const wouldCreateCycle = await this.usersRepository.checkCycle(
       groupId,
       userId,

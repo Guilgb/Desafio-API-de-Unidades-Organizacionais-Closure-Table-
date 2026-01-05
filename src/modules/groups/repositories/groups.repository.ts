@@ -24,7 +24,6 @@ export class GroupsRepository {
     await queryRunner.startTransaction();
 
     try {
-      // Create group node
       const node = queryRunner.manager.create(NodeEntity, {
         type: NodeType.GROUP,
         name,
@@ -32,7 +31,6 @@ export class GroupsRepository {
       });
       const savedNode = await queryRunner.manager.save(node);
 
-      // Insert self-link (depth = 0)
       await queryRunner.manager.query(
         `INSERT INTO closure (ancestor, descendant, depth) VALUES ($1, $1, 0)`,
         [savedNode.id],
@@ -64,7 +62,6 @@ export class GroupsRepository {
   }
 
   async checkCycle(childId: string, parentId: string): Promise<boolean> {
-    // Check if parent can reach child (which would create a cycle)
     const result = await this.closureRepository
       .createQueryBuilder('c')
       .where('c.ancestor = :parent AND c.descendant = :child', {
@@ -82,7 +79,6 @@ export class GroupsRepository {
     await queryRunner.startTransaction();
 
     try {
-      // Insert all combinations of ancestors of parent with descendants of group
       await queryRunner.manager.query(
         `
         INSERT INTO closure (ancestor, descendant, depth)

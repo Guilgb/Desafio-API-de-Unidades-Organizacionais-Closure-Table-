@@ -8,10 +8,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Get logger service
   const logger = app.get(WinstonLoggerService);
 
-  // Use global exception filter
   app.useGlobalFilters(new AllExceptionsFilter(logger));
 
   app.useGlobalPipes(

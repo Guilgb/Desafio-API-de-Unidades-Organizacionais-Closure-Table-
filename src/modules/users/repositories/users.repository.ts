@@ -24,7 +24,6 @@ export class UsersRepository {
     await queryRunner.startTransaction();
 
     try {
-      // Create user node
       const node = queryRunner.manager.create(NodeEntity, {
         type: NodeType.USER,
         name,
@@ -32,7 +31,6 @@ export class UsersRepository {
       });
       const savedNode = await queryRunner.manager.save(node);
 
-      // Insert self-link (depth = 0)
       await queryRunner.manager.query(
         `INSERT INTO closure (ancestor, descendant, depth) VALUES ($1, $1, 0)`,
         [savedNode.id],
@@ -71,7 +69,6 @@ export class UsersRepository {
   }
 
   async checkCycle(childId: string, parentId: string): Promise<boolean> {
-    // Check if parent can reach child (which would create a cycle)
     const result = await this.closureRepository
       .createQueryBuilder('c')
       .where('c.ancestor = :parent AND c.descendant = :child', {
@@ -89,7 +86,6 @@ export class UsersRepository {
     await queryRunner.startTransaction();
 
     try {
-      // Insert all combinations of ancestors of group with descendants of user
       await queryRunner.manager.query(
         `
         INSERT INTO closure (ancestor, descendant, depth)
@@ -126,7 +122,6 @@ export class UsersRepository {
       [userId],
     );
 
-    // Sort by depth ascending
     return results
       .sort((a, b) => a.depth - b.depth)
       .map(r => ({

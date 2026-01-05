@@ -4,15 +4,12 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
   name = 'CreateClosureTableStructure1704412800000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Enable uuid extension
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-    // Create node_type enum
     await queryRunner.query(`
       CREATE TYPE "node_type_enum" AS ENUM('USER', 'GROUP')
     `);
 
-    // Create nodes table
     await queryRunner.query(`
       CREATE TABLE "nodes" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -26,7 +23,6 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
       )
     `);
 
-    // Create indexes for nodes table
     await queryRunner.query(`
       CREATE INDEX "IDX_nodes_type" ON "nodes" ("type")
     `);
@@ -35,7 +31,6 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
       CREATE INDEX "IDX_nodes_email" ON "nodes" ("email")
     `);
 
-    // Create closure table
     await queryRunner.query(`
       CREATE TABLE "closure" (
         "ancestor" uuid NOT NULL,
@@ -45,7 +40,6 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
       )
     `);
 
-    // Create indexes for closure table
     await queryRunner.query(`
       CREATE INDEX "IDX_closure_ancestor" ON "closure" ("ancestor")
     `);
@@ -54,7 +48,6 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
       CREATE INDEX "IDX_closure_descendant" ON "closure" ("descendant")
     `);
 
-    // Add foreign keys
     await queryRunner.query(`
       ALTER TABLE "closure"
       ADD CONSTRAINT "FK_closure_ancestor"
@@ -71,7 +64,6 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop foreign keys
     await queryRunner.query(`
       ALTER TABLE "closure" DROP CONSTRAINT "FK_closure_descendant"
     `);
@@ -80,17 +72,14 @@ export class CreateClosureTableStructure1704412800000 implements MigrationInterf
       ALTER TABLE "closure" DROP CONSTRAINT "FK_closure_ancestor"
     `);
 
-    // Drop indexes
     await queryRunner.query(`DROP INDEX "IDX_closure_descendant"`);
     await queryRunner.query(`DROP INDEX "IDX_closure_ancestor"`);
     await queryRunner.query(`DROP INDEX "IDX_nodes_email"`);
     await queryRunner.query(`DROP INDEX "IDX_nodes_type"`);
 
-    // Drop tables
     await queryRunner.query(`DROP TABLE "closure"`);
     await queryRunner.query(`DROP TABLE "nodes"`);
 
-    // Drop enum
     await queryRunner.query(`DROP TYPE "node_type_enum"`);
   }
 }

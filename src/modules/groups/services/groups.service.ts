@@ -23,7 +23,6 @@ export class GroupsService {
     });
 
     try {
-      // Check if parent exists and is a GROUP
       if (createGroupDto.parentId) {
         const parent = await this.groupsRepository.findNodeById(
           createGroupDto.parentId,
@@ -48,9 +47,7 @@ export class GroupsService {
         createGroupDto.name,
       );
 
-      // Link to parent if provided
       if (createGroupDto.parentId) {
-        // Check for cycles
         const wouldCreateCycle = await this.groupsRepository.checkCycle(
           createGroupDto.parentId,
           group.id,
