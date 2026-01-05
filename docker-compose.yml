@@ -5,18 +5,17 @@ services:
     container_name: challange-service
     build:
       context: .
-      dockerfile: ./app/challange-service/Dockerfile
+      dockerfile: ./Dockerfile
       target: development
     ports:
-      - "3002:3002"
+      - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
-      - /app/app/challange-service/node_modules
     environment:
       - NODE_ENV=development
-      - PORT=3002
-      - DATABASE_HOST=db
+      - APP_PORT=3000
+      - DATABASE_HOST=challenge_db
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password

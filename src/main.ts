@@ -1,10 +1,18 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionsFilter } from '@shared/filters/all-exceptions.filter';
+import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Get logger service
+  const logger = app.get(WinstonLoggerService);
+
+  // Use global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter(logger));
 
   app.useGlobalPipes(
     new ValidationPipe({
