@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
-import { NodesRepository } from '../repositories/nodes.repository';
+import { NodesRepositoryInterface } from '../interfaces/repositories/node.repository.interface';
 
 @Injectable()
 export class NodesService {
   constructor(
-    private readonly nodesRepository: NodesRepository,
+    private readonly nodesRepository: NodesRepositoryInterface,
     private readonly logger: WinstonLoggerService,
   ) {}
 

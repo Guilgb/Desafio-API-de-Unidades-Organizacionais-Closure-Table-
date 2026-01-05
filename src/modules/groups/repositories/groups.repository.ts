@@ -7,9 +7,10 @@ import {
 } from '@shared/organization-core/entities';
 import { DataSource, Repository } from 'typeorm';
 import { IGroup } from '../interfaces/group.interface';
+import { GroupsRepositoryInterface } from '../interfaces/repositories/group.repository.interface';
 
 @Injectable()
-export class GroupsRepository {
+export class GroupsRepository implements GroupsRepositoryInterface {
   constructor(
     @InjectRepository(NodeEntity)
     private readonly nodeRepository: Repository<NodeEntity>,

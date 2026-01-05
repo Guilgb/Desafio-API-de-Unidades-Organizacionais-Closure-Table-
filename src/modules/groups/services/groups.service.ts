@@ -7,12 +7,12 @@ import {
 import { WinstonLoggerService } from '@shared/modules/winston/winston-logger.service';
 import { NodeType } from '@shared/organization-core/entities';
 import { CreateGroupDto } from '../dtos';
-import { GroupsRepository } from '../repositories/groups.repository';
+import { GroupsRepositoryInterface } from '../interfaces/repositories/group.repository.interface';
 
 @Injectable()
 export class GroupsService {
   constructor(
-    private readonly groupsRepository: GroupsRepository,
+    private readonly groupsRepository: GroupsRepositoryInterface,
     private readonly logger: WinstonLoggerService,
   ) {}
 

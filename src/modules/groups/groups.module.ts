@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from '@shared/modules/winston/winston.module';
 import { ClosureEntity, NodeEntity } from '@shared/organization-core/entities';
 import { GroupsController } from './controllers/groups.controller';
+import { GroupsRepositoryInterface } from './interfaces/repositories/group.repository.interface';
 import { GroupsRepository } from './repositories/groups.repository';
 import { GroupsService } from './services/groups.service';
 
@@ -12,7 +13,10 @@ import { GroupsService } from './services/groups.service';
     WinstonModule,
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, GroupsRepository],
+  providers: [
+    GroupsService,
+    { provide: GroupsRepositoryInterface, useClass: GroupsRepository },
+  ],
   exports: [GroupsService],
 })
 export class GroupsModule {}

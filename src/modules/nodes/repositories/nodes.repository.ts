@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ClosureEntity, NodeEntity } from '@shared/organization-core/entities';
 import { DataSource, Repository } from 'typeorm';
 import { INodeHierarchy } from '../interfaces/node.interface';
+import { NodesRepositoryInterface } from '../interfaces/repositories/node.repository.interface';
 
 @Injectable()
-export class NodesRepository {
+export class NodesRepository implements NodesRepositoryInterface {
   constructor(
     @InjectRepository(NodeEntity)
     private readonly nodeRepository: Repository<NodeEntity>,
