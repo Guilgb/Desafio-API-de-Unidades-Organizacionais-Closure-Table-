@@ -1,7 +1,8 @@
+import { trace } from '@opentelemetry/api';
 import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import { ElasticsearchTransport } from 'winston-elasticsearch';
 
 const levels = {
   error: 0,
@@ -37,24 +38,23 @@ const ecsFormat = winston.format.combine(
       spanId,
       ...meta
     }) => {
+      const activeSpan = trace.getActiveSpan();
+      const spanContext = activeSpan?.spanContext();
+
       const ecsLog: any = {
         '@timestamp': timestamp,
         'ecs.version': '8.0.0',
         'log.level': level,
         message,
-        'service.name': 'challenge-api',
+        'service.name': 'api-unidades-organizacionais',
       };
 
-      if (traceId || meta.traceId) {
-        ecsLog['trace.id'] = traceId || meta.traceId;
-      } else {
-        ecsLog['trace.id'] = uuidv4();
+      if (spanContext?.traceId || traceId || meta.traceId) {
+        ecsLog['trace.id'] = spanContext?.traceId || traceId || meta.traceId;
       }
 
-      if (spanId || meta.spanId) {
-        ecsLog['span.id'] = spanId || meta.spanId;
-      } else {
-        ecsLog['span.id'] = uuidv4();
+      if (spanContext?.spanId || spanId || meta.spanId) {
+        ecsLog['span.id'] = spanContext?.spanId || spanId || meta.spanId;
       }
 
       if (context) {
@@ -139,6 +139,38 @@ export const logger = winston.createLogger({
             format: ecsFormat,
           }),
         ]),
+
+    // Elasticsearch transport for centralized logging
+    ...(process.env.ELASTICSEARCH_NODE
+      ? [
+          new ElasticsearchTransport({
+            level: 'info',
+            clientOpts: {
+              node: process.env.ELASTICSEARCH_NODE,
+            },
+            index: 'api-unidades-organizacionais-logs',
+            transformer: (logData: any) => {
+              const transformed = {
+                '@timestamp': new Date().toISOString(),
+                message: logData.message,
+                severity: logData.level,
+                fields: logData.meta,
+                'service.name': 'api-unidades-organizacionais',
+              };
+
+              // Add trace context if available
+              const activeSpan = trace.getActiveSpan();
+              const spanContext = activeSpan?.spanContext();
+              if (spanContext) {
+                transformed['trace.id'] = spanContext.traceId;
+                transformed['span.id'] = spanContext.spanId;
+              }
+
+              return transformed;
+            },
+          }),
+        ]
+      : []),
   ],
 });
 
@@ -182,15 +214,19 @@ export const httpLogger = winston.createLogger({
         traceId,
         spanId,
       }) => {
+        // Get trace context from OpenTelemetry if not provided
+        const activeSpan = trace.getActiveSpan();
+        const spanContext = activeSpan?.spanContext();
+
         if (process.env.NODE_ENV === 'production') {
           const duration = Number(responseTime) || 0;
           return JSON.stringify({
             '@timestamp': timestamp,
             'ecs.version': '8.0.0',
             'log.level': 'http',
-            'service.name': 'challenge-api',
-            'trace.id': traceId || uuidv4(),
-            'span.id': spanId || uuidv4(),
+            'service.name': 'api-unidades-organizacionais',
+            'trace.id': spanContext?.traceId || traceId,
+            'span.id': spanContext?.spanId || spanId,
             'http.request.method': method,
             'url.path': url,
             'http.response.status_code': statusCode,

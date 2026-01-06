@@ -1,0 +1,62 @@
+{
+  "name": "API de Unidades Organizacionais",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "firsttris.vscode-jest-runner",
+        "ms-azuretools.vscode-docker",
+        "GraphQL.vscode-graphql-syntax"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+  "forwardPorts": [
+    3000,
+    5432,
+    9090,
+    9411,
+    16686,
+    4318
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Application",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "9090": {
+      "label": "Prometheus"
+    },
+    "9411": {
+      "label": "Jaeger Collector"
+    },
+    "16686": {
+      "label": "Jaeger UI"
+    },
+    "4318": {
+      "label": "OpenTelemetry Collector"
+    }
+  },
+  "postCreateCommand": "npm install",
+  "postStartCommand": "npm run migration:run",
+  "remoteUser": "node"
+}

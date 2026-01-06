@@ -1,7 +1,5 @@
-version: "3.8"
-
 services:
-  challange-service:
+  app:
     container_name: challange-service
     build:
       context: .
@@ -10,8 +8,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
-      - /app/node_modules
+      - .:/workspace
+      - /workspace/node_modules
     environment:
       - NODE_ENV=development
       - APP_PORT=3000
@@ -22,9 +20,17 @@ services:
       - DATABASE_NAME=challenge_db
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production
       - JWT_EXPIRATION=1d
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=api-unidades-organizacionais
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
     depends_on:
       challenge_db:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - challenge-network
 
@@ -49,8 +55,106 @@ services:
       timeout: 5s
       retries: 5
 
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "8888:8888" # Prometheus metrics exposed by the collector
+      - "8889:8889" # Prometheus exporter metrics
+    networks:
+      - challenge-network
+    depends_on:
+      - jaeger
+      - prometheus
+
+  # Jaeger
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14268:14268" # Jaeger collector HTTP
+      - "14250:14250" # Jaeger collector gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - challenge-network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    networks:
+      - challenge-network
+
+  # Elasticsearch para logs
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - challenge-network
+
+  # Kibana para visualização de logs
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - challenge-network
+
+  # DB de teste para integração
+  challenge_db_test:
+    image: postgres:17.5-alpine3.21
+    container_name: challenge_db_test
+    ports:
+      - "5433:5432"
+    networks:
+      - challenge-network
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: challenge_db_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d challenge_db_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  elasticsearch_data:
     driver: local
 
 networks:

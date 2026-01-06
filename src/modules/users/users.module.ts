@@ -3,9 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { WinstonModule } from '@shared/modules/winston/winston.module';
 import { ClosureEntity, NodeEntity } from '@shared/organization-core/entities';
 import { UsersController } from './controllers/users.controller';
+import { UsersRepositoryInterface } from './interfaces/repositories/user.repositories.interface';
 import { UsersRepository } from './repositories/users.repository';
 import { UsersService } from './services/users.service';
-import { UsersRepositoryInterface } from './interfaces/repositories/user.repositories.interface';
 
 @Module({
   imports: [

@@ -4,6 +4,12 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource } from 'typeorm';
 import { AppModule } from './../src/app.module';
+import { testDataSourceOptions } from './test-data-source';
+import {
+  cleanDatabase,
+  setupTestDatabase,
+  teardownTestDatabase,
+} from './test-helpers';
 
 describe('Closure Table API (e2e)', () => {
   let app: INestApplication<App>;
@@ -15,9 +21,23 @@ describe('Closure Table API (e2e)', () => {
   let backendTeamId: string;
 
   beforeAll(async () => {
+    // Initialize test database
+    await setupTestDatabase();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(DataSource)
+      .useFactory({
+        factory: async () => {
+          const ds = new DataSource(testDataSourceOptions);
+          if (!ds.isInitialized) {
+            await ds.initialize();
+          }
+          return ds;
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
@@ -29,11 +49,12 @@ describe('Closure Table API (e2e)', () => {
   afterAll(async () => {
     await dataSource.destroy();
     await app.close();
+    await teardownTestDatabase();
   });
 
   beforeEach(async () => {
     // Clean database before each test
-    await dataSource.query('TRUNCATE nodes, closure RESTART IDENTITY CASCADE');
+    await cleanDatabase();
   });
 
   describe('POST /users', () => {
