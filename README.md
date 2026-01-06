@@ -4,12 +4,38 @@ API CRUD para gestão de usuários e grupos organizacionais usando Closure Table
 
 ## 🚀 Tecnologias
 
-- **NestJS** - Framework Node.js
-- **TypeORM** - ORM para TypeScript/JavaScript
-- **PostgreSQL** - Banco de dados relacional
-- **Winston** - Logger com formato ECS (Elastic Common Schema)
-- **Swagger** - Documentação da API
-- **Docker** - Containerização
+### Core
+
+| Tecnologia | Descrição |
+|------------|-----------|
+| **NestJS 11** | Framework Node.js progressivo |
+| **TypeORM** | ORM para TypeScript/JavaScript |
+| **PostgreSQL** | Banco de dados relacional |
+| **Swagger** | Documentação interativa da API |
+| **Docker** | Containerização |
+
+### Observabilidade
+
+| Tecnologia | Descrição | Porta |
+|------------|-----------|-------|
+| **OpenTelemetry SDK** | Instrumentação de traces | - |
+| **Jaeger** | Distributed tracing UI | 16686 |
+| **Prometheus** | Coleta e armazenamento de métricas | 9090 |
+| **Elasticsearch** | Armazenamento de logs | 9200 |
+| **Kibana** | Visualização e análise de logs | 5601 |
+| **Winston** | Logger estruturado (formato ECS) | - |
+| **OpenTelemetry Collector** | Coleta e exporta telemetria | 4317/4318 |
+
+### Padrões e Qualidade
+
+| Tecnologia | Descrição |
+|------------|-----------|
+| **fp-ts** | Either/Result pattern para tratamento de erros |
+| **class-validator** | Validação de DTOs |
+| **class-transformer** | Transformação de objetos |
+| **ESLint** | Linting de código |
+| **Prettier** | Formatação de código |
+| **Jest** | Testes unitários e de integração |
 
 ## 📋 Pré-requisitos
 
@@ -109,33 +135,6 @@ Acesse a documentação Swagger em: `http://localhost:3000/api`
 - **GET /nodes/:id/ancestors** - Lista ancestrais do nó
 - **GET /nodes/:id/descendants** - Lista descendentes do nó
 
-## 🧪 Testes
-
-### Executar testes externos (pytest)
-
-1. Instale as dependências Python:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-2. Defina a URL base:
-
-```bash
-export BASE_URL="http://localhost:3000"
-```
-
-3. Execute os testes:
-
-```bash
-# Testes de integração
-pytest -v
-
-# Testes de carga (Locust)
-locust -f locustfile.py --headless -u 30 -r 5 -t 2m --host "$BASE_URL"
-```
 
 ## 🏗️ Arquitetura
 
@@ -173,10 +172,60 @@ src/
 
 ## 📊 Observabilidade
 
-- **Logs JSON** no formato ECS (Elastic Common Schema)
+A aplicação possui uma stack completa de observabilidade:
+
+### 🔍 Distributed Tracing (Jaeger + OpenTelemetry)
+
+- **OpenTelemetry SDK** configurado para exportar traces via OTLP
+- **Jaeger** para visualização de traces distribuídos
+- **Custom Spans** em todos os repositórios para rastrear operações de banco
+- Acesse: `http://localhost:16686`
+
+### 📈 Métricas (Prometheus)
+
+- **Prometheus** coletando métricas da aplicação
+- **Métricas customizadas**:
+  - `users_created_total` - Counter de usuários criados (success/failure)
+  - `groups_created_total` - Counter de grupos criados (success/failure)
+  - `database_query_duration_seconds` - Histogram de duração de queries
+  - `http_request_duration_seconds` - Histogram de duração de requests HTTP
+  - `active_connections` - Gauge de conexões ativas
+- Acesse: `http://localhost:9090`
+
+### 📝 Logging (Elasticsearch + Kibana)
+
+- **Winston** com formato ECS (Elastic Common Schema)
+- **Elasticsearch** para armazenamento e busca de logs
+- **Kibana** para visualização e análise
 - **Query logging** via TypeORM Logger customizado
 - **HTTP logging** com interceptor
 - Logs salvos em `logs/` com rotação diária
+- Acesse Kibana: `http://localhost:5601`
+
+### 🐳 Stack de Observabilidade (Docker)
+
+```bash
+# Subir toda a stack de observabilidade
+docker-compose up -d
+
+# Serviços disponíveis:
+# - API:           http://localhost:3000
+# - Swagger:       http://localhost:3000/api
+# - Jaeger:        http://localhost:16686
+# - Prometheus:    http://localhost:9090
+# - Kibana:        http://localhost:5601
+# - Elasticsearch: http://localhost:9200
+```
+
+### 🛠️ DevContainer
+
+O projeto inclui configuração de DevContainer para desenvolvimento consistente:
+
+```bash
+# Abra no VS Code com a extensão Remote - Containers
+code .
+# Use "Reopen in Container" (Ctrl+Shift+P)
+```
 
 ## 🔒 Validações
 
@@ -238,15 +287,31 @@ docker-compose logs -f challange-service
 
 Este projeto é privado e não possui licença pública.
 
-## ✨ Funcionalidades Implementadas
+## ✨ Funcionalidades
 
+### Core
 - ✅ Modelagem com Closure Table (sem WITH RECURSIVE nas leituras)
 - ✅ Todas as rotas especificadas
 - ✅ Validação de ciclos
 - ✅ Email único
-- ✅ Logs JSON ECS
 - ✅ TypeORM com migrations
 - ✅ Documentação Swagger
 - ✅ Docker + Docker Compose
 - ✅ Exception filters globais
 - ✅ Validação com class-validator
+
+### Observabilidade
+- ✅ OpenTelemetry SDK com exportação OTLP
+- ✅ Jaeger para distributed tracing
+- ✅ Custom spans em repositórios (Users, Groups, Nodes)
+- ✅ Prometheus para métricas
+- ✅ Métricas customizadas (counters, histograms, gauges)
+- ✅ Winston com formato ECS (Elastic Common Schema)
+- ✅ Elasticsearch para armazenamento de logs
+- ✅ Kibana para visualização de logs
+
+### Desenvolvimento
+- ✅ DevContainer configurado
+- ✅ Either/Result pattern com fp-ts para tratamento de erros
+- ✅ Testes unitários e de integração
+- ✅ ESLint + Prettier configurados
